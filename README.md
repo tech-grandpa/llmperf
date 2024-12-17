@@ -413,3 +413,92 @@ class CustomLLMClient(LLMClient):
 
 # Legacy Codebase
 The old LLMPerf code base can be found in the [llmperf-legacy](https://github.com/ray-project/llmval-legacy) repo.
+
+### OpenAI Compatible API - with Saving of Results
+First run installs:
+```
+uv venv
+uv pip install -e .
+```
+
+Results are saved in two ways:
+1. JSON files in the specified results directory
+2. SQLite database for easy querying and comparison
+
+To save results with GPU information:
+
+```bash
+export OPENAI_API_KEY=EMPTY
+export OPENAI_API_BASE="https://r8vv9omh1p4k53-8000.proxy.runpod.net/v1"
+
+uv run python token_benchmark_ray.py \
+--model "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8" \
+--gpu-info "NVIDIA A40" \
+--db-path "results.db" \
+--results-dir "result_outputs" \
+--mean-input-tokens 550 \
+--stddev-input-tokens 150 \
+--mean-output-tokens 150 \
+--stddev-output-tokens 10 \
+--max-num-completed-requests 2 \
+--timeout 600 \
+--num-concurrent-requests 2 \
+--additional-sampling-params '{}'
+```
+
+You can query the results later using SQL:
+
+```python
+import sqlite3
+import pandas as pd
+
+# Connect to the database
+conn = sqlite3.connect("results.db")
+
+# Get all results for a specific model
+df = pd.read_sql_query(
+    "SELECT * FROM benchmark_runs WHERE model = ?", 
+    conn, 
+    params=["your-model"]
+)
+
+# Compare performance across different GPUs
+gpu_perf = pd.read_sql_query("""
+    SELECT gpu_info, 
+           AVG(overall_throughput) as avg_throughput,
+           AVG(mean_latency) as avg_latency
+    FROM benchmark_runs 
+    GROUP BY gpu_info
+""", conn)
+
+print(gpu_perf)
+```
+
+The database stores:
+- Basic run information (timestamp, model, GPU)
+- Key metrics (throughput, latency, error rate)
+- Complete raw results as JSON
+- Custom metadata
+
+### Visualizing Results
+
+After running benchmarks, you can visualize the results using the provided visualization script:
+
+```bash
+python scripts/visualize_results.py
+```
+
+This will:
+1. Generate plots in a 'plots' directory:
+   - Throughput comparison across GPU types
+   - Latency metrics (mean and p99) by GPU
+   - Throughput trends over time
+2. Print summary statistics including:
+   - Average throughput and latency for each GPU type
+   - Error rates
+   - Number of benchmark runs per GPU
+
+The plots help visualize:
+- Which GPU configurations perform best
+- How consistent the performance is
+- Whether there are any performance trends over time

@@ -25,6 +25,7 @@ from llmperf.utils import (
 from tqdm import tqdm
 
 from transformers import LlamaTokenizerFast
+from llmperf.database import ResultsDB
 
 def get_token_throughput_latencies(
     model: str,
@@ -292,6 +293,8 @@ def run_token_benchmark(
     additional_sampling_params: str,
     results_dir: str,
     user_metadata: Dict[str, Any],
+    gpu_info: str,
+    db_path: str,
 ):
     """
     Args:
@@ -309,6 +312,8 @@ def run_token_benchmark(
             For more information see the LLM APIs documentation for the completions.
         results_dir: The directory to save the results to.
         user_metadata: Additional metadata to include in the results.
+        gpu_info: Information about the GPU being used.
+        db_path: Path to SQLite database for storing results.
     """
     if mean_input_tokens < 40:
         print(
@@ -328,6 +333,10 @@ def run_token_benchmark(
         num_concurrent_requests=num_concurrent_requests,
         additional_sampling_params=json.loads(additional_sampling_params),
     )
+
+    # Save to database
+    db = ResultsDB(db_path)
+    db.save_results(summary, gpu_info)
 
     if results_dir:
         filename = f"{model}_{mean_input_tokens}_{mean_output_tokens}"
@@ -462,6 +471,18 @@ args.add_argument(
         "name=foo,bar=1. These will be added to the metadata field of the results. "
     ),
 )
+args.add_argument(
+    "--gpu-info",
+    type=str,
+    default="unknown",
+    help="Information about the GPU being used (e.g. 'NVIDIA A100')",
+)
+args.add_argument(
+    "--db-path",
+    type=str,
+    default="llmperf_results.db",
+    help="Path to SQLite database for storing results",
+)
 
 if __name__ == "__main__":
     env_vars = dict(os.environ)
@@ -488,4 +509,6 @@ if __name__ == "__main__":
         additional_sampling_params=args.additional_sampling_params,
         results_dir=args.results_dir,
         user_metadata=user_metadata,
+        gpu_info=args.gpu_info,
+        db_path=args.db_path,
     )
