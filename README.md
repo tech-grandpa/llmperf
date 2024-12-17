@@ -429,13 +429,34 @@ To save results with GPU information:
 
 ```bash
 export OPENAI_API_KEY=EMPTY
-export OPENAI_API_BASE="https://r8vv9omh1p4k53-8000.proxy.runpod.net/v1"
+export OPENAI_API_BASE="https://7u4mygxsjbh4ha-8000.proxy.runpod.net/v1"
 export TOKENIZERS_PARALLELISM=false
 
 uv run python token_benchmark_ray.py \
 --model "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8" \
---gpu-info "NVIDIA A40" \
---price-per-hour 0.39 \
+--gpu-info "H200 SXM" \
+--price-per-hour 3.99 \
+--db-path "results.db" \
+--results-dir "result_outputs" \
+--mean-input-tokens 550 \
+--stddev-input-tokens 150 \
+--mean-output-tokens 150 \
+--stddev-output-tokens 10 \
+--max-num-completed-requests 64 \
+--timeout 600 \
+--num-concurrent-requests 64 \
+--additional-sampling-params '{}'
+```
+or, to run the 16 bit model, use:
+```bash
+export OPENAI_API_KEY=EMPTY
+export OPENAI_API_BASE="https://7u4mygxsjbh4ha-8000.proxy.runpod.net/v1"
+export TOKENIZERS_PARALLELISM=false
+
+uv run python token_benchmark_ray.py \
+--model "unsloth/Meta-Llama-3.1-8B-Instruct" \
+--gpu-info "H200 SXM" \
+--price-per-hour 3.99 \
 --db-path "results.db" \
 --results-dir "result_outputs" \
 --mean-input-tokens 550 \

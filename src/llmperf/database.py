@@ -52,6 +52,16 @@ class ResultsDB:
         conn.commit()
         conn.close()
 
+    def _extract_data_type(self, model_name: str) -> str:
+        """Extract data type from model name."""
+        model_lower = model_name.lower()
+        if 'fp8' in model_lower:
+            return 'FP8'
+        elif 'fp16' in model_lower:
+            return 'FP16'
+        else:
+            return 'BF16'
+
     def save_results(self, summary: Dict[str, Any], gpu_info: str, price_per_hour: float):
         """Save benchmark results to the database."""
         conn = sqlite3.connect(self.db_path)
@@ -65,21 +75,29 @@ class ResultsDB:
         mean_latency = e2e_latency.get('mean') if e2e_latency else None
         p99_latency = (e2e_latency.get('quantiles', {}).get('p99') if e2e_latency else None)
 
-        # Get throughput metrics
+        # Get throughput metrics and token counts
         output_throughput = float(results.get(common_metrics.OUTPUT_THROUGHPUT) or 
                                 results.get(common_metrics.REQ_OUTPUT_THROUGHPUT) or 
                                 0.0)
-        
-        # Calculate price per token
-        # price_per_second = price_per_hour / 3600
-        # price_per_token = price_per_second / output_throughput if output_throughput else 0
-        tokens_per_hour = output_throughput * 3600 if output_throughput else 0
-        price_per_token = price_per_hour / tokens_per_hour if tokens_per_hour else 0
+        mean_input_tokens = summary.get('mean_input_tokens', 0)
+        mean_output_tokens = summary.get('mean_output_tokens', 0)
+        num_completed_requests = results.get(common_metrics.NUM_COMPLETED_REQUESTS, 0)
+
+        # Calculate price per input token
+        if output_throughput and mean_input_tokens and mean_output_tokens:
+            # Convert output tokens/sec to input tokens/sec using the ratio
+            token_ratio = mean_input_tokens / mean_output_tokens
+            input_throughput = output_throughput * token_ratio  # input tokens per second
+            input_tokens_per_hour = input_throughput * 3600
+            price_per_token = price_per_hour / input_tokens_per_hour if input_tokens_per_hour else 0
+        else:
+            price_per_token = 0
         
         data = {
             'timestamp': datetime.now().isoformat(),
             'model': summary.get('model'),
             'gpu_info': gpu_info,
+            'data_type': self._extract_data_type(summary.get('model', '')),
             'price_per_hour': price_per_hour,
             'mean_input_tokens': summary.get('mean_input_tokens'),
             'mean_output_tokens': summary.get('mean_output_tokens'),

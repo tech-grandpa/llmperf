@@ -59,4 +59,18 @@ GROUP BY model, gpu_info
 """
 print(pd.read_sql_query(query5, conn))
 
+# Check the raw data
+print("Raw data from database:")
+query = """
+SELECT 
+    model,
+    data_type,
+    gpu_info,
+    price_per_hour,
+    overall_throughput,
+    price_per_token
+FROM benchmark_runs
+"""
+print(pd.read_sql_query(query, conn))
+
 conn.close()
