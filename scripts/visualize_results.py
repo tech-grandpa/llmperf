@@ -20,8 +20,9 @@ def plot_metrics_by_gpu(df: pd.DataFrame, save_dir: str = "plots"):
     
     # 1. Throughput by GPU
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=df, x='gpu_info', y='overall_throughput', 
-                ci='sd', capsize=0.1)
+    gpu_throughput = df.groupby('gpu_info')['overall_throughput'].agg(['mean', 'std']).reset_index()
+    plt.bar(gpu_throughput['gpu_info'], gpu_throughput['mean'], 
+            yerr=gpu_throughput['std'], capsize=5)
     plt.title('Token Throughput by GPU Type')
     plt.xlabel('GPU Type')
     plt.ylabel('Tokens/second')
@@ -29,11 +30,12 @@ def plot_metrics_by_gpu(df: pd.DataFrame, save_dir: str = "plots"):
     plt.tight_layout()
     plt.savefig(f"{save_dir}/throughput_by_gpu.png")
     plt.close()
-    
+
     # 2. Price per token by GPU
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=df, x='gpu_info', y='price_per_token', 
-                ci='sd', capsize=0.1)
+    gpu_price = df.groupby('gpu_info')['price_per_token'].agg(['mean', 'std']).reset_index()
+    plt.bar(gpu_price['gpu_info'], gpu_price['mean'], 
+            yerr=gpu_price['std'], capsize=5)
     plt.title('Price per Token by GPU Type')
     plt.xlabel('GPU Type')
     plt.ylabel('Price per Token ($)')
@@ -41,11 +43,12 @@ def plot_metrics_by_gpu(df: pd.DataFrame, save_dir: str = "plots"):
     plt.tight_layout()
     plt.savefig(f"{save_dir}/price_per_token_by_gpu.png")
     plt.close()
-    
+
     # 3. Time to First Token by GPU
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=df, x='gpu_info', y='ttft', 
-                ci='sd', capsize=0.1)
+    gpu_ttft = df.groupby('gpu_info')['ttft'].agg(['mean', 'std']).reset_index()
+    plt.bar(gpu_ttft['gpu_info'], gpu_ttft['mean'], 
+            yerr=gpu_ttft['std'], capsize=5)
     plt.title('Time to First Token by GPU Type')
     plt.xlabel('GPU Type')
     plt.ylabel('Time (seconds)')
@@ -59,15 +62,11 @@ def print_summary_stats(df: pd.DataFrame):
     print("\nSummary Statistics:")
     print("-" * 50)
     
-    # Group by GPU and calculate mean metrics with std
-    gpu_stats = df.groupby('gpu_info').agg({
-        'overall_throughput': ['mean', 'std'],
-        'price_per_token': ['mean', 'std'],
-        'ttft': ['mean', 'std']
-    }).round(4)
+    metrics = ['overall_throughput', 'price_per_token', 'ttft']
+    stats = df.groupby('gpu_info')[metrics].agg(['mean', 'std']).round(3)
     
     print("\nPerformance by GPU:")
-    print(gpu_stats)
+    print(stats)
     
     print("\nNumber of runs by GPU:")
     print(df['gpu_info'].value_counts())

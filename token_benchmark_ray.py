@@ -295,6 +295,7 @@ def run_token_benchmark(
     user_metadata: Dict[str, Any],
     gpu_info: str,
     db_path: str,
+    price_per_hour: float,
 ):
     """
     Args:
@@ -314,6 +315,7 @@ def run_token_benchmark(
         user_metadata: Additional metadata to include in the results.
         gpu_info: Information about the GPU being used.
         db_path: Path to SQLite database for storing results.
+        price_per_hour: The cost per hour for running the GPU instance
     """
     if mean_input_tokens < 40:
         print(
@@ -336,7 +338,7 @@ def run_token_benchmark(
 
     # Save to database
     db = ResultsDB(db_path)
-    db.save_results(summary, gpu_info)
+    db.save_results(summary, gpu_info, price_per_hour)
 
     if results_dir:
         filename = f"{model}_{mean_input_tokens}_{mean_output_tokens}"
@@ -483,6 +485,12 @@ args.add_argument(
     default="llmperf_results.db",
     help="Path to SQLite database for storing results",
 )
+args.add_argument(
+    "--price-per-hour",
+    type=float,
+    required=True,
+    help="The cost per hour for running the GPU instance",
+)
 
 if __name__ == "__main__":
     env_vars = dict(os.environ)
@@ -511,4 +519,5 @@ if __name__ == "__main__":
         user_metadata=user_metadata,
         gpu_info=args.gpu_info,
         db_path=args.db_path,
+        price_per_hour=args.price_per_hour,
     )

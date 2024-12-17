@@ -59,21 +59,22 @@ class ResultsDB:
 
         results = summary.get('results', {})
         
-        # Get metrics
+        # Get e2e latency and TTFT metrics
         e2e_latency = results.get(common_metrics.E2E_LAT, {})
+        ttft = results.get(common_metrics.TTFT, {}).get('mean') if results.get(common_metrics.TTFT) else None
         mean_latency = e2e_latency.get('mean') if e2e_latency else None
         p99_latency = (e2e_latency.get('quantiles', {}).get('p99') if e2e_latency else None)
-        
+
+        # Get throughput metrics
         output_throughput = float(results.get(common_metrics.OUTPUT_THROUGHPUT) or 
                                 results.get(common_metrics.REQ_OUTPUT_THROUGHPUT) or 
                                 0.0)
         
         # Calculate price per token
-        tokens_per_hour = output_throughput * 3600  # convert from per second to per hour
-        price_per_token = price_per_hour / tokens_per_hour if tokens_per_hour > 0 else 0
-        
-        # Get TTFT
-        ttft = results.get(common_metrics.TTFT, {}).get('mean') if results.get(common_metrics.TTFT) else None
+        # price_per_second = price_per_hour / 3600
+        # price_per_token = price_per_second / output_throughput if output_throughput else 0
+        tokens_per_hour = output_throughput * 3600 if output_throughput else 0
+        price_per_token = price_per_hour / tokens_per_hour if tokens_per_hour else 0
         
         data = {
             'timestamp': datetime.now().isoformat(),
@@ -95,19 +96,10 @@ class ResultsDB:
             'metadata': json.dumps(summary.get('metadata', {}), cls=NumpyEncoder)
         }
 
-        c.execute('''
-            INSERT INTO benchmark_runs (
-                timestamp, model, gpu_info, price_per_hour, mean_input_tokens, mean_output_tokens,
-                num_concurrent_requests, overall_throughput, error_rate,
-                completed_requests, completed_requests_per_min, mean_latency,
-                p99_latency, price_per_token, ttft, raw_results, metadata
-            ) VALUES (
-                :timestamp, :model, :gpu_info, :price_per_hour, :mean_input_tokens, :mean_output_tokens,
-                :num_concurrent_requests, :overall_throughput, :error_rate,
-                :completed_requests, :completed_requests_per_min, :mean_latency,
-                :p99_latency, :price_per_token, :ttft, :raw_results, :metadata
-            )
-        ''', data)
+        # Insert into database
+        fields = ', '.join(data.keys())
+        placeholders = ', '.join([f':{k}' for k in data.keys()])
+        c.execute(f'INSERT INTO benchmark_runs ({fields}) VALUES ({placeholders})', data)
 
         conn.commit()
         conn.close() 

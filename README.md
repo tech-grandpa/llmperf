@@ -430,19 +430,21 @@ To save results with GPU information:
 ```bash
 export OPENAI_API_KEY=EMPTY
 export OPENAI_API_BASE="https://r8vv9omh1p4k53-8000.proxy.runpod.net/v1"
+export TOKENIZERS_PARALLELISM=false
 
 uv run python token_benchmark_ray.py \
 --model "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8" \
 --gpu-info "NVIDIA A40" \
+--price-per-hour 0.39 \
 --db-path "results.db" \
 --results-dir "result_outputs" \
 --mean-input-tokens 550 \
 --stddev-input-tokens 150 \
 --mean-output-tokens 150 \
 --stddev-output-tokens 10 \
---max-num-completed-requests 2 \
+--max-num-completed-requests 64 \
 --timeout 600 \
---num-concurrent-requests 2 \
+--num-concurrent-requests 64 \
 --additional-sampling-params '{}'
 ```
 
@@ -485,7 +487,7 @@ The database stores:
 After running benchmarks, you can visualize the results using the provided visualization script:
 
 ```bash
-python scripts/visualize_results.py
+uv run scripts/visualize_results.py
 ```
 
 This will:
