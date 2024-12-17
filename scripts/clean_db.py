@@ -1,19 +1,16 @@
 import sqlite3
 
 def clean_database(db_path: str = "results.db"):
-    """Remove the first two runs from the database."""
+    """Remove the anomalous H200 SXM BF16 run with low throughput (around 108.51 tokens/s)."""
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     
-    # Delete the first two entries by ID
+    # Delete the specific run with low throughput on H200 SXM
     c.execute('''
         DELETE FROM benchmark_runs 
-        WHERE id IN (
-            SELECT id 
-            FROM benchmark_runs 
-            ORDER BY id ASC 
-            LIMIT 2
-        )
+        WHERE gpu_info = 'H200 SXM' 
+        AND data_type = 'BF16'
+        AND overall_throughput < 200
     ''')
     
     conn.commit()

@@ -414,7 +414,14 @@ class CustomLLMClient(LLMClient):
 # Legacy Codebase
 The old LLMPerf code base can be found in the [llmperf-legacy](https://github.com/ray-project/llmval-legacy) repo.
 
+---
+
 ### OpenAI Compatible API - with Saving of Results
+Performance notes:
+- At large batch size (64), fp8 gives some speed up on H200 SXM.
+- H200 largely gives shorter time to first token.
+- SGLang is necessary to test as it probably maintains much higher throughput.
+
 First run installs:
 ```
 uv venv
