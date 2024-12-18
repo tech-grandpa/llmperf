@@ -436,13 +436,13 @@ To save results with GPU information:
 
 ```bash
 export OPENAI_API_KEY=EMPTY
-export OPENAI_API_BASE="https://2y9cpeqsa2jxwa-8000.proxy.runpod.net/v1"
+export OPENAI_API_BASE="https://hut239lye8qvqa-8000.proxy.runpod.net/v1"
 export TOKENIZERS_PARALLELISM=false
 
 uv run python token_benchmark_ray.py \
 --model "unsloth/Meta-Llama-3.1-8B-Instruct" \
---gpu-info "L40S" \
---price-per-hour 1.03 \
+--gpu-info "RTX 4000 Ada" \
+--price-per-hour 0.38 \
 --db-path "results.db" \
 --results-dir "result_outputs" \
 --mean-input-tokens 550 \
