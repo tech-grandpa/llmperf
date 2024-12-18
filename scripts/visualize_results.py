@@ -8,23 +8,26 @@ def create_plots_dir():
     if not os.path.exists('plots'):
         os.makedirs('plots')
 
-def create_grouped_bar_plot(metric_name, df, title, ylabel, filename):
+def get_gpu_order_by_fp8_ttft(df):
+    """Get GPU order based on FP8 TTFT values."""
+    fp8_ttft = df[df['data_type'] == 'FP8'].groupby('gpu_info')['ttft'].mean()
+    return fp8_ttft.sort_values().index.tolist()
+
+def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order):
     """Create a grouped bar plot with error bars."""
-    # Get unique GPUs and data types
-    gpus = df['gpu_info'].unique()
-    data_types = sorted(df['data_type'].unique())  # Sort to ensure consistent ordering
+    # Get unique data types
+    data_types = sorted(df['data_type'].unique())
     
     # Set up the plot
-    plt.figure(figsize=(10, 6))
-    width = 0.35  # Width of bars
-    x = np.arange(len(gpus))
+    plt.figure(figsize=(12, 6))
+    width = 0.35
+    x = np.arange(len(gpu_order))
     
     # Create bars for each data type
     for i, dtype in enumerate(data_types):
-        # Get data for this type, maintaining GPU order
         data = []
         errors = []
-        for gpu in gpus:
+        for gpu in gpu_order:
             gpu_data = df[(df['gpu_info'] == gpu) & (df['data_type'] == dtype)]
             if not gpu_data.empty:
                 data.append(gpu_data[metric_name].mean())
@@ -43,7 +46,7 @@ def create_grouped_bar_plot(metric_name, df, title, ylabel, filename):
     plt.xlabel('GPU')
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.xticks(x, gpus, rotation=45)
+    plt.xticks(x, gpu_order, rotation=45, ha='right')
     plt.legend()
     plt.tight_layout()
     
@@ -55,38 +58,57 @@ def plot_metrics_by_gpu(df):
     """Create various performance metric plots."""
     create_plots_dir()
     
-    # Plot overall throughput
-    create_grouped_bar_plot('overall_throughput', 
-                          df,
-                          'Token Generation Throughput by GPU and Data Type',
-                          'Tokens/second',
-                          'overall_throughput_by_gpu')
+    # Get GPU order based on FP8 TTFT
+    gpu_order = get_gpu_order_by_fp8_ttft(df)
+    print("\nGPU order based on FP8 TTFT:")
+    for i, gpu in enumerate(gpu_order, 1):
+        fp8_ttft = df[(df['data_type'] == 'FP8') & (df['gpu_info'] == gpu)]['ttft'].mean()
+        print(f"{i}. {gpu}: {fp8_ttft:.3f}s")
     
-    # Plot TTFT (Time To First Token)
+    # Plot metrics using consistent GPU order
     create_grouped_bar_plot('ttft',
                           df,
                           'Time To First Token by GPU and Data Type',
                           'Seconds',
-                          'ttft_by_gpu')
+                          'ttft_by_gpu',
+                          gpu_order)
     
-    # Plot price per token
+    create_grouped_bar_plot('overall_throughput', 
+                          df,
+                          'Token Generation Throughput by GPU and Data Type',
+                          'Tokens/second',
+                          'overall_throughput_by_gpu',
+                          gpu_order)
+    
     create_grouped_bar_plot('price_per_token',
                           df,
                           'Price per Token by GPU and Data Type',
                           'USD per Token',
-                          'price_per_token_by_gpu')
+                          'price_per_token_by_gpu',
+                          gpu_order)
 
 def print_summary_stats(df):
     """Print summary statistics for the benchmark results."""
     print("\nSummary Statistics:")
-    print("\nAverage Throughput by GPU and Data Type:")
-    print(df.groupby(['gpu_info', 'data_type'])['overall_throughput'].mean())
     
-    print("\nAverage TTFT by GPU and Data Type:")
-    print(df.groupby(['gpu_info', 'data_type'])['ttft'].mean())
+    # Get GPU order for consistent presentation
+    gpu_order = get_gpu_order_by_fp8_ttft(df)
     
-    print("\nAverage Price per Token by GPU and Data Type:")
-    print(df.groupby(['gpu_info', 'data_type'])['price_per_token'].mean())
+    metrics = {
+        'Throughput': 'overall_throughput',
+        'TTFT': 'ttft',
+        'Price per Token': 'price_per_token'
+    }
+    
+    for metric_name, column in metrics.items():
+        print(f"\nAverage {metric_name} by GPU and Data Type:")
+        stats = df.pivot_table(
+            values=column,
+            index='gpu_info',
+            columns='data_type',
+            aggfunc='mean'
+        ).reindex(gpu_order)
+        print(stats)
 
 def main():
     # Connect to database
