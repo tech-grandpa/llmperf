@@ -20,11 +20,50 @@ def create_comparison_plot(metric_name, df_base, df_vllm, title, ylabel, filenam
     plt.figure(figsize=(14, 8))
     
     if gpu_order is None:
-        # Get all unique GPUs from both dataframes
         gpu_order = sorted(set(df_base['gpu_info'].unique()) | set(df_vllm['gpu_info'].unique()))
     
-    width = 0.2  # Make bars slightly narrower to fit 4 bars
+    width = 0.2
     x = np.arange(len(gpu_order))
+    
+    # Define color schemes
+    sglang_color = '#1f77b4'  # blue
+    vllm_color = '#ff7f0e'    # orange
+    
+    # Configuration for each bar type
+    bar_configs = [
+        {
+            'df': df_base,
+            'dtype': 'FP8',
+            'color': sglang_color,
+            'label': 'SGLang FP8',
+            'hatch': '',
+            'position': -width*1.5
+        },
+        {
+            'df': df_base,
+            'dtype': 'BF16',
+            'color': sglang_color,
+            'label': 'SGLang BF16',
+            'hatch': '///',
+            'position': -width/2
+        },
+        {
+            'df': df_vllm,
+            'dtype': 'FP8',
+            'color': vllm_color,
+            'label': 'vLLM FP8',
+            'hatch': '',
+            'position': width/2
+        },
+        {
+            'df': df_vllm,
+            'dtype': 'BF16',
+            'color': vllm_color,
+            'label': 'vLLM BF16',
+            'hatch': '///',
+            'position': width*1.5
+        }
+    ]
     
     # Function to get data for a specific framework and data type
     def get_framework_data(df, gpu_list, data_type):
@@ -46,27 +85,25 @@ def create_comparison_plot(metric_name, df_base, df_vllm, title, ylabel, filenam
             errors.append(error)
         return data, errors
     
-    # Plot bars for each framework and data type
-    positions = [-width*1.5, -width/2, width/2, width*1.5]
-    labels = ['SGLang FP8', 'SGLang BF16', 'vLLM FP8', 'vLLM BF16']
-    
-    data_configs = [
-        (df_base, 'FP8'),    # SGLang FP8
-        (df_base, 'BF16'),   # SGLang BF16
-        (df_vllm, 'FP8'),    # vLLM FP8
-        (df_vllm, 'BF16')    # vLLM BF16
-    ]
-    
-    for pos, label, (df, dtype) in zip(positions, labels, data_configs):
-        data, errors = get_framework_data(df, gpu_order, dtype)
-        plt.bar(x + pos, data, width, label=label, yerr=errors, capsize=5)
+    # Plot bars
+    for config in bar_configs:
+        data, errors = get_framework_data(config['df'], gpu_order, config['dtype'])
+        plt.bar(x + config['position'], 
+               data, 
+               width, 
+               label=config['label'],
+               color=config['color'],
+               hatch=config['hatch'],
+               yerr=errors,
+               capsize=5,
+               alpha=0.9 if config['hatch'] == '' else 0.7)  # Slightly transparent for BF16
     
     plt.xlabel('GPU', fontsize=18)
     plt.ylabel(ylabel, fontsize=18)
     plt.title(title, fontsize=20, pad=20)
     plt.xticks(x, gpu_order, rotation=45, ha='right', fontsize=16)
     plt.yticks(fontsize=16)
-    plt.legend(fontsize=16)
+    plt.legend(fontsize=16, ncol=2)  # Two columns for legend
     
     plt.tight_layout()
     plt.savefig(f'comparison_plots/{filename}.png', dpi=300, bbox_inches='tight')
