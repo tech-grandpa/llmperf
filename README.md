@@ -2,6 +2,8 @@
 
 A Tool for evaulation the performance of LLM APIs.
 
+Forked from https://github.com/ray-project/llmperf to include support for running on Runpod endpoints and visualising results. Scroll to the bottom of this page for guidance.
+
 # Installation
 ```bash
 git clone https://github.com/ray-project/llmperf.git

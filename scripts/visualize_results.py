@@ -18,8 +18,9 @@ def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order)
     # Get unique data types
     data_types = sorted(df['data_type'].unique())
     
-    # Set up the plot
-    plt.figure(figsize=(12, 6))
+    # Set up the plot with larger font sizes
+    plt.rcParams.update({'font.size': 16})
+    plt.figure(figsize=(14, 8))
     width = 0.35
     x = np.arange(len(gpu_order))
     
@@ -30,8 +31,15 @@ def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order)
         for gpu in gpu_order:
             gpu_data = df[(df['gpu_info'] == gpu) & (df['data_type'] == dtype)]
             if not gpu_data.empty:
-                data.append(gpu_data[metric_name].mean())
-                errors.append(gpu_data[metric_name].std())
+                # Convert to price per million input tokens if that's what we're plotting
+                if metric_name == 'price_per_token':
+                    value = gpu_data[metric_name].mean() * 1_000_000
+                    error = gpu_data[metric_name].std() * 1_000_000
+                else:
+                    value = gpu_data[metric_name].mean()
+                    error = gpu_data[metric_name].std()
+                data.append(value)
+                errors.append(error)
             else:
                 data.append(0)
                 errors.append(0)
@@ -43,16 +51,22 @@ def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order)
                yerr=errors,
                capsize=5)
     
-    plt.xlabel('GPU')
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.xticks(x, gpu_order, rotation=45, ha='right')
-    plt.legend()
+    plt.xlabel('GPU', fontsize=18)
+    plt.ylabel(ylabel, fontsize=18)
+    plt.title(title, fontsize=20, pad=20)
+    plt.xticks(x, gpu_order, rotation=45, ha='right', fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend(fontsize=16)
+    
+    # Adjust layout to prevent label cutoff
     plt.tight_layout()
     
-    # Save the plot
-    plt.savefig(f'plots/{filename}.png')
+    # Save the plot with high DPI
+    plt.savefig(f'plots/{filename}.png', dpi=300, bbox_inches='tight')
     plt.close()
+    
+    # Reset font size for subsequent plots
+    plt.rcParams.update({'font.size': plt.rcParamsDefault['font.size']})
 
 def plot_metrics_by_gpu(df):
     """Create various performance metric plots."""
@@ -82,8 +96,8 @@ def plot_metrics_by_gpu(df):
     
     create_grouped_bar_plot('price_per_token',
                           df,
-                          'Price per Token by GPU and Data Type',
-                          'USD per Token',
+                          'Price per million input Tokens by GPU and Data Type',
+                          'USD per million input Tokens',
                           'price_per_token_by_gpu',
                           gpu_order)
 
