@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import argparse
 
 def create_plots_dir():
     if not os.path.exists('plots'):
@@ -125,8 +126,17 @@ def print_summary_stats(df):
         print(stats)
 
 def main():
-    # Connect to database
-    conn = sqlite3.connect('results.db')
+    # Add command line argument parsing
+    parser = argparse.ArgumentParser(description='Visualize LLM benchmark results')
+    parser.add_argument('--db-path', 
+                       type=str,
+                       default='results.db',
+                       help='Path to the SQLite database (default: results.db)')
+    
+    args = parser.parse_args()
+    
+    # Connect to database using provided path
+    conn = sqlite3.connect(args.db_path)
     
     # Load data
     df = pd.read_sql_query('''
