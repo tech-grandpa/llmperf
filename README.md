@@ -440,9 +440,9 @@ export OPENAI_API_BASE="https://qj3y28gcyu18o7-8000.proxy.runpod.net/v1"
 export TOKENIZERS_PARALLELISM=false
 
 uv run python token_benchmark_ray.py \
---model "neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8" \
+--model "unsloth/Meta-Llama-3.1-8B-Instruct" \
 --gpu-info "H100 SXM" \
---price-per-hour 3.99 \
+--price-per-hour 2.99 \
 --db-path "results.db" \
 --results-dir "result_outputs" \
 --mean-input-tokens 550 \
