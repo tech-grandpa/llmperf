@@ -6,21 +6,9 @@ import os
 import argparse
 import json
 
-def create_plots_dir(db_path, prefix=None):
-    """Create plots directory relative to database path with optional prefix."""
-    # Get the directory where the database file is located
-    db_dir = os.path.dirname(os.path.abspath(db_path))
-    
-    # Create plots folder name with optional prefix
-    plots_dir = f'{prefix}_plots' if prefix else 'plots'
-    
-    # Create full path for plots directory
-    plots_path = os.path.join(db_dir, plots_dir)
-    
-    if not os.path.exists(plots_path):
-        os.makedirs(plots_path)
-    
-    return plots_path
+def create_plots_dir():
+    if not os.path.exists('plots'):
+        os.makedirs('plots')
 
 def get_gpu_order_by_fp8_ttft(df):
     """Get GPU order based on FP8 TTFT values."""
@@ -33,7 +21,7 @@ def get_gpu_order_by_fp8_gpu_name(df):
     gpu_names = df[df['data_type'] == 'FP8']['gpu_info'].unique()
     return sorted(gpu_names.tolist())
 
-def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order, plots_path, prefix=None):
+def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order):
     """Create a grouped bar plot with error bars."""
     # Get unique data types
     data_types = sorted(df['data_type'].unique())
@@ -81,17 +69,16 @@ def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order,
     # Adjust layout to prevent label cutoff
     plt.tight_layout()
     
-    # Modify the save path to include the prefix if provided
-    save_filename = f'{prefix}_{filename}.png' if prefix else f'{filename}.png'
-    plt.savefig(os.path.join(plots_path, save_filename), dpi=300, bbox_inches='tight')
+    # Save the plot with high DPI
+    plt.savefig(f'plots/{filename}.png', dpi=300, bbox_inches='tight')
     plt.close()
     
     # Reset font size for subsequent plots
     plt.rcParams.update({'font.size': plt.rcParamsDefault['font.size']})
 
-def plot_metrics_by_gpu(df, db_path, prefix=None):
+def plot_metrics_by_gpu(df):
     """Create various performance metric plots."""
-    plots_path = create_plots_dir(db_path, prefix)
+    create_plots_dir()
     
     # Get GPU order based on FP8 TTFT
     gpu_order_by_ttft = get_gpu_order_by_fp8_ttft(df)
@@ -101,42 +88,34 @@ def plot_metrics_by_gpu(df, db_path, prefix=None):
         fp8_ttft = df[(df['data_type'] == 'FP8') & (df['gpu_info'] == gpu)]['ttft'].mean()
         print(f"{i}. {gpu}: {fp8_ttft:.3f}s")
     
-    # Plot metrics using consistent GPU order and adding plots_path
+    # Plot metrics using consistent GPU order
     create_grouped_bar_plot('ttft',
                           df,
                           'Time To First Token by GPU and Data Type',
                           'Seconds',
                           'ttft_by_gpu',
-                          gpu_order_by_ttft,
-                          plots_path,
-                          prefix)
+                          gpu_order_by_ttft)
     
     create_grouped_bar_plot('overall_throughput', 
                           df,
                           'Token Generation Throughput by GPU and Data Type',
                           'Tokens/second',
                           'overall_throughput_by_gpu',
-                          gpu_order_by_gpu_info,
-                          plots_path,
-                          prefix)
+                          gpu_order_by_gpu_info)
 
     create_grouped_bar_plot('request_output_throughput',
-                          df,
-                          'Token/Second per Request by GPU and Data Type',
-                          'Tokens/second',
-                          'overall_tokenpersecond_by_gpu',
-                          gpu_order_by_gpu_info,
-                          plots_path,
-                          prefix)
-
+                            df,
+                            'Token/Second per Request by GPU and Data Type',
+                            'Tokens/second',
+                            'overall_tokenpersecond_by_gpu',
+                            gpu_order_by_gpu_info)
+    #
     # create_grouped_bar_plot('price_per_token',
     #                       df,
     #                       'Price per million input Tokens by GPU and Data Type',
     #                       'USD per million input Tokens',
     #                       'price_per_token_by_gpu',
-    #                       gpu_order_by_gpu_info,
-    #                       plots_path,
-    #                       prefix)
+    #                       gpu_order_by_gpu_info)
 
 def print_summary_stats(df):
     """Print summary statistics for the benchmark results."""
@@ -175,10 +154,6 @@ def main():
                        type=str,
                        default='results.db',
                        help='Path to the SQLite database (default: results.db)')
-    parser.add_argument('--prefix',
-                       type=str,
-                       default=None,
-                       help='Prefix to add to output filenames')
     
     args = parser.parse_args()
     
@@ -231,8 +206,13 @@ def main():
         FROM benchmark_runs
     ''', conn)
 
-    # Generate plots with prefix and db_path
-    plot_metrics_by_gpu(df, args.db_path, args.prefix)
+
+
+
+
+
+    # Generate plots
+    plot_metrics_by_gpu(df)
     
     # Print summary statistics
     print_summary_stats(df)

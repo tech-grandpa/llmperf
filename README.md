@@ -1,6 +1,24 @@
-# LLMPerf
+# LLMPerf (modified)
 
-A Tool for evaulation the performance of LLM APIs.
+This is a clone of a repo provided (and also modified) by Trelis Research (see below). Do not use this one for further perf-tests, but consider the changes a guide on conducting your own adaptations for test analysis.
+
+
+The core differences of this repo are the following:
+
+- enhanced ```visualize_results.py``` script to also show the tokens/second for an individual thread in a dedicated diagram
+- The ```perfTest.sh``` script for easily running llmperf tests
+- the ```benchmark_parallel_*.sh``` scripts that help running tests against multiple endpoints at a time easier
+- added ```generate_all_diagrams.sh``` to more quickly analyse and generate diagrams for results stored in a results.db
+- added ```results```-folder with details data about the various tests conducted. The naming scheme is as follows.
+  - ```Cloud```: instances running in runpod. 
+  - ```homelab```: instances running locally without a cloud involved, but locally could also involve a network, just a pretty fast one
+  - ```single```: only one load driver is active, which still created up to 64 parallel threads of load on a single gpu (in the test scenario)
+  - ```parallel```: more than on load driver is hitting a machine. Each load driver targeted a dedicated gpu of that machine. 
+  - ```corrected```: bad results were removed from the results.db to smoothen results diagrams by eliminating outliers
+
+## Original Repo content follows here:
+
+A Tool for evaluation the performance of LLM APIs.
 
 Forked from https://github.com/ray-project/llmperf to include support for running on Runpod endpoints and visualising results. Scroll to the bottom of this page for guidance.
 
