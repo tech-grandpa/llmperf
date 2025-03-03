@@ -6,7 +6,7 @@ This is a clone of a repo provided (and also modified) by Trelis Research (see b
 The core differences of this repo are the following:
 
 - enhanced ```visualize_results.py``` script to also show the tokens/second for an individual thread in a dedicated diagram
-- The ```perfTest.sh``` script for easily running llmperf tests
+- The ```perfTest.sh``` script for easily running llmperf tests as part of the benchmark scripts (you need to set environment properties if you want to use this for a single run - see benchmark scripts below for details on how to use it)
 - the ```benchmark_parallel_*.sh``` scripts that help running tests against multiple endpoints at a time easier
 - added ```generate_all_diagrams.sh``` to more quickly analyse and generate diagrams for results stored in a results.db
 - added ```results```-folder with details data about the various tests conducted. The naming scheme is as follows.

@@ -26,25 +26,34 @@ for i in $(seq 1 $ITERATIONS); do
     ## Run pod instances
 
     # 3090
-    env OPENAI_API_BASE="https://ixjeofi583r088-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_3090" ./perfTest.sh > RTX3090_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://ixjeofi583r088-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_3090" ./perfTest.sh > RTX3090_runpod_iter${i}.log 2>&1 &
 
     # 2x 3090
-    # env OPENAI_API_BASE="https://ixjeofi583r088-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_3090_2x" ./perfTest.sh > RTX3090_2x_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://ixjeofi583r088-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_3090_2x" ./perfTest.sh > RTX3090_2x_runpod_iter${i}.log 2>&1 &
 
     # A 4000
-    env OPENAI_API_BASE="https://9pjwcuml42taea-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A4000" ./perfTest.sh > A4000_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://9pjwcuml42taea-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A4000" ./perfTest.sh > A4000_runpod_iter${i}.log 2>&1 &
 
     # A 5000
-    env OPENAI_API_BASE="https://bojunq7gtawalz-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A5000" ./perfTest.sh > A5000_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://bojunq7gtawalz-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A5000" ./perfTest.sh > A5000_runpod_iter${i}.log 2>&1 &
 
     # A 6000
-    env OPENAI_API_BASE="https://6fs3pje7ra0skj-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A6000" ./perfTest.sh > A6000_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://6fs3pje7ra0skj-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A6000" ./perfTest.sh > A6000_runpod_iter${i}.log 2>&1 &
 
     # RTX 4090
-    env OPENAI_API_BASE="https://v8q51jabluxk0g-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_4090" ./perfTest.sh > RTX4090_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://v8q51jabluxk0g-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_4090" ./perfTest.sh > RTX4090_runpod_iter${i}.log 2>&1 &
     
     # A 6000 ADA
-    env OPENAI_API_BASE="https://tfulssad4wafj9-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A6000_ADA" ./perfTest.sh > A6000ada_runpod_iter${i}.log 2>&1 &
+#    env OPENAI_API_BASE="https://tfulssad4wafj9-8000.proxy.runpod.net/v1" GPU_INFO="runpod_RTX_A6000_ADA" ./perfTest.sh > A6000ada_runpod_iter${i}.log 2>&1 &
+
+    # L40
+    env OPENAI_API_BASE="https://hpw50upkaa2pcu-8000.proxy.runpod.net/v1" GPU_INFO="(runpod) L40" ./perfTest.sh > l40_runpod_iter${i}.log 2>&1 &
+
+    # H100 SXM
+#    env OPENAI_API_BASE="https://df8r24irdbrypy-8000.proxy.runpod.net/v1" GPU_INFO="(runpod) H100 SXM" ./perfTest.sh > h100SXM_runpod_iter${i}.log 2>&1 &
+
+    # H200 SXM
+#    env OPENAI_API_BASE="https://02yrfq4ruonb95-8000.proxy.runpod.net/v1" GPU_INFO="(runpod) H200 SXM" ./perfTest.sh > h200SXM_runpod_iter${i}.log 2>&1 &
 
     # Wait for all background processes in this iteration to complete
     wait

@@ -35,8 +35,23 @@ def get_gpu_order_by_fp8_gpu_name(df):
 
 def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order, plots_path, prefix=None):
     """Create a grouped bar plot with error bars."""
-    # Get unique data types
-    data_types = sorted(df['data_type'].unique())
+    # Check if dataframe is empty
+    if df.empty:
+        print(f"No data available for {title}")
+        return
+    
+    # Check if we have any data for the metric
+    if df[metric_name].isna().all():
+        print(f"No data available for metric: {metric_name}")
+        return
+        
+    # Get unique data types with actual data
+    data_types = df[df[metric_name].notna()]['data_type'].unique()
+    if len(data_types) == 0:
+        print(f"No valid data types found for {metric_name}")
+        return
+    
+    data_types = sorted(data_types)
     
     # Set up the plot with larger font sizes
     plt.rcParams.update({'font.size': 16})
@@ -91,6 +106,10 @@ def create_grouped_bar_plot(metric_name, df, title, ylabel, filename, gpu_order,
 
 def plot_metrics_by_gpu(df, db_path, prefix=None):
     """Create various performance metric plots."""
+    if df.empty:
+        print("No data found in the database. Please run benchmarks first.")
+        return
+        
     plots_path = create_plots_dir(db_path, prefix)
     
     # Get GPU order based on FP8 TTFT
@@ -169,7 +188,6 @@ def column_exists(cursor, table_name, column_name):
     return column_name in columns
 
 def main():
-    # Add command line argument parsing
     parser = argparse.ArgumentParser(description='Visualize LLM benchmark results')
     parser.add_argument('--db-path', 
                        type=str,
@@ -182,10 +200,24 @@ def main():
     
     args = parser.parse_args()
     
-    # Connect to database using provided path
     conn = sqlite3.connect(args.db_path)
-
     cursor = conn.cursor()
+
+    # Create table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS benchmark_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            gpu_info TEXT,
+            data_type TEXT,
+            overall_throughput REAL,
+            ttft REAL,
+            price_per_token REAL,
+            mean_latency REAL,
+            raw_results TEXT,
+            request_output_throughput REAL
+        )
+    ''')
+    conn.commit()
 
     # Add new columns if they don't exist
     if not column_exists(cursor, "benchmark_runs", "request_output_throughput"):
